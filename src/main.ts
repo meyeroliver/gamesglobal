@@ -1,3 +1,6 @@
+import { promises as fs } from 'fs';
+import * as path from 'path';
+
 async function main() {
   const userInput = process.argv.splice(2);
   console.log(goodMatch(userInput));
@@ -10,12 +13,27 @@ function goodMatch(userInput: Array<string>): string {
   let tempStr: string;
 
   if (validate == null) {
-    userInputConcat = userInput[0] + 'matches' + userInput[1];
+    /* userInputConcat = userInput[0] + 'matches' + userInput[1];
     inputSet = Array.from(new Set(userInputConcat));
     tempStr = countRepeatChars(userInputConcat, inputSet);
-    return resultStr(userInput, Number(numStrReducer(tempStr)));
+    return resultStr(userInput, Number(numStrReducer(tempStr))); */
+    parseFile();
+    return 'awe';
   } else {
     return validate;
+  }
+}
+
+async function parseFile(): Promise<Array<string>> {
+  try {
+    const dirPath = path.join(__dirname, '../');
+    const data = await fs.readFile(
+      dirPath.concat('testfile-Sheet1.csv'),
+      'utf8'
+    );
+    return data.split('\r\n');
+  } catch (err) {
+    return err;
   }
 }
 
@@ -79,14 +97,15 @@ function countRepeatChars(userStr: String, inputSet: Array<string>): string {
 }
 
 function validateUserInput(userInput: Array<string>): string {
-  if (userInput.length == 2) {
-    if (isAlpha(userInput[0]) && isAlpha(userInput[1])) {
+  if (userInput.length == 1) {
+    const file = userInput[0].split('.');
+    if (file.length == 2 && file[1] === 'csv') {
       return null;
     } else {
-      return 'Invalid input. No number and special characters allowed. Please try again.';
+      return 'Invalid File type. Required file is a (.csv) .Please try again.';
     }
   } else {
-    return 'Invalid number of arguments. Please try again with 2 arguments.';
+    return 'Invalid number of arguments. Please try again with 1 argument (e.g file.csv).';
   }
 }
 
