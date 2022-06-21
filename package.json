@@ -2,9 +2,8 @@
   "name": "gamesglobal",
   "version": "1.0.0",
   "description": "<p align=\"center\">   <a href=\"http://nestjs.com/\" target=\"blank\"><img src=\"https://nestjs.com/img/logo_text.svg\" width=\"320\" alt=\"Nest Logo\" /></a> </p>",
-  "main": "src/main.ts",
   "scripts": {
-    "start": "node src/main.ts",
+    "start": "npx tsc && node dist/main.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -19,5 +18,8 @@
   "homepage": "https://github.com/meyeroliver/gamesglobal#readme",
   "devDependencies": {
     "@types/node": "^18.0.0"
+  },
+  "dependencies": {
+    "typescript": "^4.7.4"
   }
 }
