@@ -1,7 +1,9 @@
-import { consumers } from 'stream';
-
 async function main() {
   const userInput = process.argv.splice(2);
+  console.log(goodMatch(userInput));
+}
+
+function goodMatch(userInput: Array<string>): string {
   const validate = validateUserInput(userInput);
   let userInputConcat: string;
   let inputSet: Array<string>;
@@ -11,15 +13,14 @@ async function main() {
     userInputConcat = userInput[0] + 'matches' + userInput[1];
     inputSet = Array.from(new Set(userInputConcat));
     tempStr = countRepeatChars(userInputConcat, inputSet);
-    console.log(resultStr(userInput, Number(numStrReducer(tempStr))));
+    return resultStr(userInput, Number(numStrReducer(tempStr)));
   } else {
-    console.log(validate);
+    return validate;
   }
 }
 
 function resultStr(userInput: Array<string>, match: number): string {
   let str = `${userInput[0]} matches ${userInput[1]} ${match}%`;
-  console.log(match);
   if (match >= 80) {
     str += ', good match';
   }
