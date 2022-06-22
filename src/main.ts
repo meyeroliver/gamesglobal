@@ -3,11 +3,15 @@ import * as path from 'path';
 
 async function main() {
   const userInput = process.argv.splice(2);
-  console.log(goodMatch(userInput));
+  await goodMatch(userInput);
 }
 
-function goodMatch(userInput: Array<string>): string {
+async function goodMatch(userInput: Array<string>): Promise<string> {
   const validate = validateUserInput(userInput);
+  let fileData: Array<string>;
+  let screenedFile: Array<string>;
+  let genderArr: Array<Array<string>> = [];
+
   let userInputConcat: string;
   let inputSet: Array<string>;
   let tempStr: string;
@@ -17,11 +21,42 @@ function goodMatch(userInput: Array<string>): string {
     inputSet = Array.from(new Set(userInputConcat));
     tempStr = countRepeatChars(userInputConcat, inputSet);
     return resultStr(userInput, Number(numStrReducer(tempStr))); */
-    parseFile();
+    fileData = await parseFile();
+    screenedFile = screenFileDate(fileData);
+    genderArr = distinctGender(filterGender(screenedFile));
     return 'awe';
   } else {
     return validate;
   }
+}
+
+function filterGender(fileData: Array<string>): Array<Array<string>> {
+  let genderArr: Array<Array<string>> = [];
+  let male: Array<string> = [];
+  let female: Array<string> = [];
+  let player: Array<string> = [];
+
+  console.log(fileData);
+  for (let i = 0; i < fileData.length; i++) {
+    player = fileData[i].split(',');
+    if (typeof player != 'undefined' && isMale(player[1])) {
+      male.push(player[0]);
+    } else if (typeof player != 'undefined' && isfemale(player[1])) {
+      female.push(player[0]);
+    }
+  }
+  genderArr.push(male);
+  genderArr.push(female);
+  return genderArr;
+}
+
+function distinctGender(genderArr: Array<Array<string>>): Array<Array<string>> {
+  const maleSet = new Set(genderArr[0]);
+  const femaleSet = new Set(genderArr[1]);
+  let distinctGenderArr: string[][] = [];
+  distinctGenderArr[0] = Array.from(maleSet);
+  distinctGenderArr[1] = Array.from(femaleSet);
+  return distinctGenderArr;
 }
 
 async function parseFile(): Promise<Array<string>> {
@@ -107,6 +142,32 @@ function validateUserInput(userInput: Array<string>): string {
   } else {
     return 'Invalid number of arguments. Please try again with 1 argument (e.g file.csv).';
   }
+}
+
+function screenFileDate(fileData: Array<string>): Array<string> {
+  let fileLineArr: Array<string>;
+  let screenedFile: Array<string> = [];
+  for (let i = 0; i < fileData.length; i++) {
+    fileLineArr = fileData[i].split(',');
+    if (fileLineArr.length == 2) {
+      if (isAlpha(fileLineArr[0].trim()) && validateGender(fileLineArr[1])) {
+        screenedFile.push(fileData[i]);
+      }
+    }
+  }
+  return screenedFile;
+}
+
+function validateGender(gender: string): boolean {
+  return isMale(gender) || isfemale(gender) ? true : false;
+}
+
+function isMale(gender: string): boolean {
+  return gender.toLowerCase() === 'm' ? true : false;
+}
+
+function isfemale(gender: string): boolean {
+  return gender.toLowerCase() === 'f' ? true : false;
 }
 
 function isAlpha(str: string): boolean {
