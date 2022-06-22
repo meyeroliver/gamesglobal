@@ -1,5 +1,7 @@
 import { promises as fs } from 'fs';
 import * as path from 'path';
+import { Matcher } from './match';
+import { Person } from './personl';
 
 async function main() {
   const userInput = process.argv.splice(2);
@@ -10,39 +12,45 @@ async function goodMatch(userInput: Array<string>): Promise<string> {
   const validate = validateUserInput(userInput);
   let fileData: Array<string>;
   let screenedFile: Array<string>;
-  let genderArr: Array<Array<string>> = [];
+  let genderArr: Array<Array<Person>> = [];
 
   let userInputConcat: string;
   let inputSet: Array<string>;
   let tempStr: string;
+  let match: Matcher;
 
   if (validate == null) {
-    /* userInputConcat = userInput[0] + 'matches' + userInput[1];
-    inputSet = Array.from(new Set(userInputConcat));
-    tempStr = countRepeatChars(userInputConcat, inputSet);
-    return resultStr(userInput, Number(numStrReducer(tempStr))); */
     fileData = await parseFile();
     screenedFile = screenFileDate(fileData);
     genderArr = distinctGender(filterGender(screenedFile));
+    for (let i = 0; i < genderArr[0].length; i++) {
+      for (let j = 0; j < genderArr[1].length; j++) {
+        match = new Matcher(genderArr[0][i], genderArr[1][j]);
+        match.pairItUp();
+        console.log(match.toString());
+      }
+    }
+
     return 'awe';
   } else {
     return validate;
   }
 }
 
-function filterGender(fileData: Array<string>): Array<Array<string>> {
-  let genderArr: Array<Array<string>> = [];
-  let male: Array<string> = [];
-  let female: Array<string> = [];
-  let player: Array<string> = [];
+function filterGender(fileData: Array<string>): Array<Array<Person>> {
+  let genderArr: Array<Array<Person>> = [];
+  let male: Array<Person> = [];
+  let female: Array<Person> = [];
+  let person: Person;
+  let temp: Array<string>;
 
-  console.log(fileData);
   for (let i = 0; i < fileData.length; i++) {
-    player = fileData[i].split(',');
-    if (typeof player != 'undefined' && isMale(player[1])) {
-      male.push(player[0]);
-    } else if (typeof player != 'undefined' && isfemale(player[1])) {
-      female.push(player[0]);
+    temp = fileData[i].split(',');
+    person = new Person(temp[0], temp[1]);
+    if (typeof person != 'undefined' && isMale(person.gender)) {
+      male.push(person);
+    } else if (typeof person != 'undefined' && isfemale(person.gender)) {
+      female.push(person);
     }
   }
   genderArr.push(male);
@@ -50,10 +58,10 @@ function filterGender(fileData: Array<string>): Array<Array<string>> {
   return genderArr;
 }
 
-function distinctGender(genderArr: Array<Array<string>>): Array<Array<string>> {
+function distinctGender(genderArr: Array<Array<Person>>): Array<Array<Person>> {
   const maleSet = new Set(genderArr[0]);
   const femaleSet = new Set(genderArr[1]);
-  let distinctGenderArr: string[][] = [];
+  let distinctGenderArr: Person[][] = [];
   distinctGenderArr[0] = Array.from(maleSet);
   distinctGenderArr[1] = Array.from(femaleSet);
   return distinctGenderArr;
@@ -70,65 +78,6 @@ async function parseFile(): Promise<Array<string>> {
   } catch (err) {
     return err;
   }
-}
-
-function resultStr(userInput: Array<string>, match: number): string {
-  let str = `${userInput[0]} matches ${userInput[1]} ${match}%`;
-  if (match >= 80) {
-    str += ', good match';
-  }
-  return str;
-}
-
-function numStrReducer(numStr: string): string {
-  let newStr = '';
-  let num: number;
-  let rightIn = 1;
-  let loopLength: number;
-  if (numStr.length == 2) {
-    return numStr;
-  } else {
-    loopLength = determineLoopLength(numStr.length);
-    for (let i = 0; i < loopLength; i++) {
-      if (i == loopLength - 1 && !isOdd(loopLength)) {
-        newStr += numStr[loopLength - 1];
-      } else {
-        num = Number(numStr[i]) + Number(numStr[numStr.length - rightIn]);
-        rightIn++;
-        newStr += num;
-      }
-    }
-    return numStrReducer(newStr);
-  }
-}
-
-function determineLoopLength(num: number): number {
-  let loopLength = 0;
-  if (isOdd(num)) {
-    loopLength = Math.round(num / 2);
-  } else {
-    loopLength = num / 2;
-  }
-  return loopLength;
-}
-
-function isOdd(num: number): boolean {
-  return num % 2 == 1 ? true : false;
-}
-
-function countRepeatChars(userStr: String, inputSet: Array<string>): string {
-  let matchNumString = '';
-  let num = 0;
-  for (let i = 0; i < inputSet.length; i++) {
-    num = 0;
-    for (let j = 0; j < userStr.length; j++) {
-      if (inputSet[i].toLowerCase() === userStr[j].toLowerCase()) {
-        num++;
-      }
-    }
-    matchNumString += num;
-  }
-  return matchNumString;
 }
 
 function validateUserInput(userInput: Array<string>): string {
