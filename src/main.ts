@@ -1,39 +1,64 @@
-import { promises as fs } from 'fs';
+import { copyFile, promises as fs } from 'fs';
 import * as path from 'path';
 import { Matcher } from './match';
 import { Person } from './personl';
 
 async function main() {
-  const userInput = process.argv.splice(2);
-  await goodMatch(userInput);
+  try {
+    const userInput = process.argv.splice(2);
+    const matcherArr = await goodMatch(userInput);
+    if (matcherArr?.length == 0) {
+      throw `Unfortunately was not able to perform the matching algorithm with this set of data. \nPlease try another`;
+    } else {
+      console.table(matcherArr);
+    }
+  } catch (error) {
+    console.log(error);
+  }
 }
 
-async function goodMatch(userInput: Array<string>): Promise<string> {
+async function goodMatch(userInput: Array<string>): Promise<Array<Matcher>> {
   const validate = validateUserInput(userInput);
   let fileData: Array<string>;
   let screenedFile: Array<string>;
   let genderArr: Array<Array<Person>> = [];
-
-  let userInputConcat: string;
-  let inputSet: Array<string>;
-  let tempStr: string;
   let match: Matcher;
+  let matchArr: Array<Matcher> = [];
 
   if (validate == null) {
-    fileData = await parseFile();
-    screenedFile = screenFileDate(fileData);
-    genderArr = distinctGender(filterGender(screenedFile));
-    for (let i = 0; i < genderArr[0].length; i++) {
-      for (let j = 0; j < genderArr[1].length; j++) {
-        match = new Matcher(genderArr[0][i], genderArr[1][j]);
-        match.pairItUp();
-        console.log(match.toString());
-      }
-    }
+    try {
+      fileData = await parseFile(userInput[0]);
+      screenedFile = screenFileDate(fileData, userInput[0]);
+      genderArr = distinctGender(filterGender(screenedFile));
 
-    return 'awe';
+      for (let i = 0; i < genderArr[0].length; i++) {
+        for (let j = 0; j < genderArr[1].length; j++) {
+          match = new Matcher(genderArr[0][i], genderArr[1][j]);
+          match.pairItUp();
+          matchArr.push(match);
+        }
+      }
+
+      matchArr.sort((a, b) => {
+        if (a.intensity > b.intensity) {
+          return -1;
+        } else if (a.intensity == b.intensity) {
+          if (a.male.name.localeCompare(b.male.name) == 0) {
+            return a.female.name.localeCompare(b.female.name);
+          } else {
+            return a.male.name.localeCompare(b.male.name);
+          }
+        } else {
+          return 1;
+        }
+      });
+
+      return matchArr;
+    } catch (error) {
+      throw error;
+    }
   } else {
-    return validate;
+    throw validate;
   }
 }
 
@@ -58,25 +83,33 @@ function filterGender(fileData: Array<string>): Array<Array<Person>> {
   return genderArr;
 }
 
+function removeDuplicates(persons: Array<Person>): Array<Person> {
+  return persons.filter(
+    (value, index, self) =>
+      index ===
+      self.findIndex((t) => t.name === value.name && t.gender === value.gender)
+  );
+}
+
 function distinctGender(genderArr: Array<Array<Person>>): Array<Array<Person>> {
-  const maleSet = new Set(genderArr[0]);
-  const femaleSet = new Set(genderArr[1]);
   let distinctGenderArr: Person[][] = [];
-  distinctGenderArr[0] = Array.from(maleSet);
-  distinctGenderArr[1] = Array.from(femaleSet);
+
+  const males = removeDuplicates(genderArr[0]);
+  const females = removeDuplicates(genderArr[1]);
+
+  distinctGenderArr.push(males);
+  distinctGenderArr.push(females);
+
   return distinctGenderArr;
 }
 
-async function parseFile(): Promise<Array<string>> {
+async function parseFile(filename: string): Promise<Array<string>> {
   try {
     const dirPath = path.join(__dirname, '../');
-    const data = await fs.readFile(
-      dirPath.concat('testfile-Sheet1.csv'),
-      'utf8'
-    );
+    const data = await fs.readFile(dirPath.concat(filename), 'utf8');
     return data.split('\r\n');
   } catch (err) {
-    return err;
+    throw err;
   }
 }
 
@@ -86,22 +119,32 @@ function validateUserInput(userInput: Array<string>): string {
     if (file.length == 2 && file[1] === 'csv') {
       return null;
     } else {
-      return 'Invalid File type. Required file is a (.csv) .Please try again.';
+      throw 'Invalid File type. Required file is a (.csv) .Please try again.';
     }
   } else {
-    return 'Invalid number of arguments. Please try again with 1 argument (e.g file.csv).';
+    throw 'Invalid number of arguments. Please try again with 1 argument (e.g file.csv).';
   }
 }
 
-function screenFileDate(fileData: Array<string>): Array<string> {
+function screenFileDate(
+  fileData: Array<string>,
+  filename: string
+): Array<string> {
   let fileLineArr: Array<string>;
   let screenedFile: Array<string> = [];
+
+  if (fileData.length <= 1) {
+    throw `The following file [${filename}] contains too little data.`;
+  }
+
   for (let i = 0; i < fileData.length; i++) {
     fileLineArr = fileData[i].split(',');
     if (fileLineArr.length == 2) {
       if (isAlpha(fileLineArr[0].trim()) && validateGender(fileLineArr[1])) {
         screenedFile.push(fileData[i]);
       }
+    } else {
+      throw `The following file [${filename}] contains an invalid file structure`;
     }
   }
   return screenedFile;
