@@ -1,4 +1,4 @@
-import { copyFile, promises as fs } from 'fs';
+import * as fs from 'fs';
 import * as path from 'path';
 import { Matcher } from './match';
 import { Person } from './personl';
@@ -6,11 +6,16 @@ import { Person } from './personl';
 async function main() {
   try {
     const userInput = process.argv.splice(2);
+    const dirPath = path.join(__dirname, '../output.txt');
+    if (fs.existsSync(dirPath)) {
+      fs.unlinkSync(dirPath);
+    }
+
     const matcherArr = await goodMatch(userInput);
     if (matcherArr?.length == 0) {
       throw `Unfortunately was not able to perform the matching algorithm with this set of data. \nPlease try another`;
     } else {
-      console.table(matcherArr);
+      console.log(await produceResult(matcherArr));
     }
   } catch (error) {
     console.log(error);
@@ -103,13 +108,30 @@ function distinctGender(genderArr: Array<Array<Person>>): Array<Array<Person>> {
   return distinctGenderArr;
 }
 
+async function produceResult(result: Array<Matcher>): Promise<string> {
+  const dirPath = path.join(__dirname, '../');
+
+  try {
+    const matcherResultsArr = result.map((r) => r.toString());
+    const content = matcherResultsArr.reduce((l1, l2) => {
+      return l1.toString().concat('\r\n').concat(l2.toString());
+    });
+    fs.writeFileSync(dirPath.concat('output.txt'), content);
+    return `The result of the matches has been created and can be found here: ${dirPath.concat(
+      'output.txt'
+    )}`;
+  } catch (error) {
+    throw error;
+  }
+}
+
 async function parseFile(filename: string): Promise<Array<string>> {
   try {
     const dirPath = path.join(__dirname, '../');
-    const data = await fs.readFile(dirPath.concat(filename), 'utf8');
+    const data = fs.readFileSync(dirPath.concat(filename), 'utf8');
     return data.split('\r\n');
-  } catch (err) {
-    throw err;
+  } catch (error) {
+    throw `This file ${error.path} does not exist.`;
   }
 }
 
@@ -165,5 +187,13 @@ function isfemale(gender: string): boolean {
 function isAlpha(str: string): boolean {
   return /^[a-zA-Z]+$/.test(str);
 }
+
+/* process.on('uncaughtException', (err) => {
+  console.log(
+    'An unforseen error has occured. \n Error has been reported and will be seen to.',
+    err
+  );
+  process.exit(1);
+}); */
 
 main();
