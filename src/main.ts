@@ -188,12 +188,11 @@ function isAlpha(str: string): boolean {
   return /^[a-zA-Z]+$/.test(str);
 }
 
-/* process.on('uncaughtException', (err) => {
+process.on('uncaughtException', (err) => {
   console.log(
-    'An unforseen error has occured. \n Error has been reported and will be seen to.',
-    err
+    'An unforseen error has occured. \n Error has been reported and will be seen to.'
   );
   process.exit(1);
-}); */
+});
 
 main();
