@@ -19,7 +19,6 @@ async function main() {
 
 function resultStr(userInput: Array<string>, match: number): string {
   let str = `${userInput[0]} matches ${userInput[1]} ${match}%`;
-  console.log(match);
   if (match >= 80) {
     str += ', good match';
   }
